@@ -1,0 +1,49 @@
+name: deploy-to-gh-pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-deploy:
+    name: Build, test and deploy
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        node-version: [12]
+        working-directory: [./vscode]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2.3.4
+    
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install packages
+        working-directory: ${{ matrix.working-directory }}
+        run: yarn install
+
+      - name: Lint project
+        working-directory: ${{ matrix.working-directory }}
+        run: yarn lint
+
+      - name: Test project
+        working-directory: ${{ matrix.working-directory }}
+        run: yarn test
+
+      - name: Generate project
+        working-directory: ${{ matrix.working-directory }}
+        run: yarn generate
+
+      - name: Deploy project to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: build
+          FOLDER: vscode/dist
